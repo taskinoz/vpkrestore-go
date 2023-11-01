@@ -137,15 +137,24 @@ func main() {
 
 	vpkFiles, err := getFilesWithExtension(".vpk")
 	if err != nil {
+		fmt.Println()
 		panic(err)
 	}
+
+	if len(vpkFiles) == 0 {
+		fmt.Println("No VPK files found")
+		return
+	}
+
 	fmt.Printf("Found %d VPK files\n", len(vpkFiles))
 
 	remoteHashes, err := downloadHashes()
 	if err != nil {
+		fmt.Println()
 		panic(err)
 	}
-	fmt.Printf("Found %d remote hashes\n", len(remoteHashes))
+
+	var mismatchedFiles []string
 
 	for index, file := range vpkFiles {
 		displayLoadingBar(len(vpkFiles), index)
@@ -157,18 +166,32 @@ func main() {
 		}
 		if rHashes, exists := remoteHashes[file]; exists {
 			if md5h != rHashes[0] || sha1h != rHashes[1] || sha256h != rHashes[2] {
-				if shouldDownload(file) {
-					fmt.Printf("\nDownloading correct version of %s...\n", file)
-					err = downloadFile(hashURL+file, file)
-					if err != nil {
-						fmt.Printf("Failed to download %s: %v\n", file, err)
-					}
-				}
+				mismatchedFiles = append(mismatchedFiles, file)
 			}
 		}
 	}
 
-	// To ensure the loading bar is complete at the end
+	// Ensure the loading bar is complete at the end
 	displayLoadingBar(len(vpkFiles), len(vpkFiles))
 	fmt.Println() // Newline after the loading bar
+
+	// Check mismatched files and prompt user
+	if len(mismatchedFiles) > 0 {
+		fmt.Println("Found mismatched hashes for:")
+		for _, file := range mismatchedFiles {
+			fmt.Println(file)
+		}
+		fmt.Print("Do you want to restore these files? (y/n) ")
+		var response string
+		fmt.Scanln(&response)
+		if strings.ToLower(response) == "y" {
+			for _, file := range mismatchedFiles {
+				fmt.Printf("Downloading correct version of %s...\n", file)
+				err := downloadFile(hashURL+file, file)
+				if err != nil {
+					fmt.Printf("Failed to download %s: %v\n", file, err)
+				}
+			}
+		}
+	}
 }
