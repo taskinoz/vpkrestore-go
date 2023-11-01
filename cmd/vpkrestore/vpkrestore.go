@@ -17,6 +17,11 @@ import (
 var debug bool
 var auto bool
 
+// Constants for loading bar
+const totalBars = 40 // Total number of bars in the loading bar
+const barChar = "█"  // Character to use for the loading bar
+var lastBars int     // To track the number of bars from the last update
+
 const hashURL = "https://taskinoz.com/titanfall/pc/" // Replace with your URL
 
 func init() {
@@ -27,6 +32,16 @@ func init() {
 func debugPrint(v ...interface{}) {
 	if debug {
 		fmt.Println(v...)
+	}
+}
+
+func displayLoadingBar(total, current int) {
+	percentage := float64(current) / float64(total)
+	bars := int(percentage * totalBars)
+
+	if bars != lastBars { // Only update if the bars changed
+		fmt.Printf("\rChecking VPK's [%-40s] ", strings.Repeat(barChar, bars))
+		lastBars = bars
 	}
 }
 
@@ -132,16 +147,18 @@ func main() {
 	}
 	fmt.Printf("Found %d remote hashes\n", len(remoteHashes))
 
-	for _, file := range vpkFiles {
+	for index, file := range vpkFiles {
+		displayLoadingBar(len(vpkFiles), index)
+
 		md5h, sha1h, sha256h, err := computeHashes(file)
 		if err != nil {
-			fmt.Printf("Error hashing %s: %v\n", file, err)
+			fmt.Printf("\nError hashing %s: %v\n", file, err)
 			continue
 		}
 		if rHashes, exists := remoteHashes[file]; exists {
 			if md5h != rHashes[0] || sha1h != rHashes[1] || sha256h != rHashes[2] {
 				if shouldDownload(file) {
-					fmt.Printf("Downloading correct version of %s...\n", file)
+					fmt.Printf("\nDownloading correct version of %s...\n", file)
 					err = downloadFile(hashURL+file, file)
 					if err != nil {
 						fmt.Printf("Failed to download %s: %v\n", file, err)
@@ -150,4 +167,8 @@ func main() {
 			}
 		}
 	}
+
+	// To ensure the loading bar is complete at the end
+	displayLoadingBar(len(vpkFiles), len(vpkFiles))
+	fmt.Println() // Newline after the loading bar
 }
