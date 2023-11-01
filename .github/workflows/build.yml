@@ -1,7 +1,3 @@
-# Build an executable for Linux, Windows, and macOS.
-# Upload the executables as artifacts.
-# Upload the executables as GitHub Releases.
-
 name: Build
 
 on:
@@ -26,14 +22,22 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      - name: Build
+      - name: Build for Linux
         run: |
           mkdir -p build
-          GOOS=linux GOARCH=amd64 go build -o cmd/vpkrestore/vpkrestore.go build/vpkrestore-linux-amd64
-          GOOS=windows GOARCH=amd64 go build -o cmd/vpkrestore/vpkrestore.go build/vpkrestore-windows-amd64.exe
-          GOOS=darwin GOARCH=amd64 go build -o cmd/vpkrestore/vpkrestore.go build/vpkrestore-darwin-amd64
+          GOOS=linux GOARCH=amd64 go build -o build/vpkrestore-linux-amd64 cmd/vpkrestore/main.go
 
-      - name: Upload artifact
+      - name: Build for Windows
+        run: |
+          mkdir -p build
+          GOOS=windows GOARCH=amd64 go build -o build/vpkrestore-windows-amd64.exe cmd/vpkrestore/main.go
+
+      - name: Build for macOS
+        run: |
+          mkdir -p build
+          GOOS=darwin GOARCH=amd64 go build -o build/vpkrestore-darwin-amd64 cmd/vpkrestore/main.go
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:
           name: vpkrestore
@@ -50,8 +54,8 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Release Asset for Linux
+        id: upload-release-asset-linux
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -59,4 +63,26 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: build/vpkrestore-linux-amd64
           asset_name: vpkrestore-linux-amd64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset for Windows
+        id: upload-release-asset-windows
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/vpkrestore-windows-amd64.exe
+          asset_name: vpkrestore-windows-amd64.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset for macOS
+        id: upload-release-asset-macos
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: build/vpkrestore-darwin-amd64
+          asset_name: vpkrestore-darwin-amd64
           asset_content_type: application/octet-stream
