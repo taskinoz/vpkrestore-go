@@ -25,17 +25,17 @@ jobs:
       - name: Build for Linux
         run: |
           mkdir -p build
-          GOOS=linux GOARCH=amd64 go build -o build/vpkrestore-linux-amd64 cmd/vpkrestore/main.go
+          GOOS=linux GOARCH=amd64 go build -o build/vpkrestore-linux-amd64 cmd/vpkrestore/vpkrestore.go
 
       - name: Build for Windows
         run: |
           mkdir -p build
-          GOOS=windows GOARCH=amd64 go build -o build/vpkrestore-windows-amd64.exe cmd/vpkrestore/main.go
+          GOOS=windows GOARCH=amd64 go build -o build/vpkrestore-windows-amd64.exe cmd/vpkrestore/vpkrestore.go
 
       - name: Build for macOS
         run: |
           mkdir -p build
-          GOOS=darwin GOARCH=amd64 go build -o build/vpkrestore-darwin-amd64 cmd/vpkrestore/main.go
+          GOOS=darwin GOARCH=amd64 go build -o build/vpkrestore-darwin-amd64 cmd/vpkrestore/vpkrestore.go
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
