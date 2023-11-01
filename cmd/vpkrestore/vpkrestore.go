@@ -178,20 +178,32 @@ func main() {
 	// Check mismatched files and prompt user
 	if len(mismatchedFiles) > 0 {
 		fmt.Println("Found mismatched hashes for:")
+
+		restoreAll := false
 		for _, file := range mismatchedFiles {
-			fmt.Println(file)
-		}
-		fmt.Print("Do you want to restore these files? (y/n) ")
-		var response string
-		fmt.Scanln(&response)
-		if strings.ToLower(response) == "y" {
-			for _, file := range mismatchedFiles {
-				fmt.Printf("Downloading correct version of %s...\n", file)
-				err := downloadFile(hashURL+file, file)
-				if err != nil {
-					fmt.Printf("Failed to download %s: %v\n", file, err)
+			if !restoreAll {
+				fmt.Printf("Do you want to restore %s? (y/n/all) ", file)
+				var response string
+				fmt.Scanln(&response)
+				switch strings.ToLower(response) {
+				case "y":
+					// Restore just this file
+				case "all":
+					// Restore all remaining files
+					restoreAll = true
+				default:
+					// Skip this file
+					continue
 				}
 			}
+
+			fmt.Printf("Downloading correct version of %s...\n", file)
+			err := downloadFile(hashURL+file, file)
+			if err != nil {
+				fmt.Printf("Failed to download %s: %v\n", file, err)
+			}
 		}
+	} else {
+		fmt.Println("No modified vpk's found")
 	}
 }
