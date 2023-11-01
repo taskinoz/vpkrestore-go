@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,7 +14,19 @@ import (
 	"strings"
 )
 
+var debug bool
+
 const hashURL = "https://taskinoz.com/titanfall/pc/" // Replace with your URL
+
+func init() {
+	flag.BoolVar(&debug, "d", false, "Enable debug mode")
+}
+
+func debugPrint(v ...interface{}) {
+	if debug {
+		fmt.Println(v...)
+	}
+}
 
 func getFilesWithExtension(extension string) ([]string, error) {
 	var files []string
@@ -44,7 +57,7 @@ func computeHashes(filePath string) (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	fmt.Printf("%s:\nMD5: %s\nSHA1: %s\nSHA256: %s\n", filePath, hex.EncodeToString(md5Hash.Sum(nil)), hex.EncodeToString(sha1Hash.Sum(nil)), hex.EncodeToString(sha256Hash.Sum(nil)))
+	debugPrint("%s:\nMD5: %s\nSHA1: %s\nSHA256: %s\n", filePath, hex.EncodeToString(md5Hash.Sum(nil)), hex.EncodeToString(sha1Hash.Sum(nil)), hex.EncodeToString(sha256Hash.Sum(nil)))
 
 	return hex.EncodeToString(md5Hash.Sum(nil)), hex.EncodeToString(sha1Hash.Sum(nil)), hex.EncodeToString(sha256Hash.Sum(nil)), nil
 }
@@ -90,6 +103,10 @@ func downloadFile(url string, dest string) error {
 }
 
 func main() {
+	flag.Parse()
+
+	debugPrint("Debug mode enabled")
+
 	vpkFiles, err := getFilesWithExtension(".vpk")
 	if err != nil {
 		panic(err)
