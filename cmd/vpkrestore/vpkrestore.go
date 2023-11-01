@@ -15,11 +15,13 @@ import (
 )
 
 var debug bool
+var auto bool
 
 const hashURL = "https://taskinoz.com/titanfall/pc/" // Replace with your URL
 
 func init() {
 	flag.BoolVar(&debug, "d", false, "Enable debug mode")
+	flag.BoolVar(&auto, "a", false, "Auto download mismatched files without prompt")
 }
 
 func debugPrint(v ...interface{}) {
@@ -85,6 +87,17 @@ func downloadHashes() (map[string][3]string, error) {
 	return hashes, nil
 }
 
+func shouldDownload(filename string) bool {
+	if auto {
+		return true
+	}
+
+	fmt.Printf("Found mismatched hashes for: %s\nDo you want to restore this file? (y/n) ", filename)
+	var response string
+	fmt.Scanln(&response)
+	return strings.ToLower(response) == "y"
+}
+
 func downloadFile(url string, dest string) error {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -127,11 +140,12 @@ func main() {
 		}
 		if rHashes, exists := remoteHashes[file]; exists {
 			if md5h != rHashes[0] || sha1h != rHashes[1] || sha256h != rHashes[2] {
-				fmt.Printf("Hash mismatch for %s. Downloading correct version...\n", file)
-				// Assuming the file is hosted at the same URL with the hash file. Adjust as needed.
-				err = downloadFile(hashURL+file, file)
-				if err != nil {
-					fmt.Printf("Failed to download %s: %v\n", file, err)
+				if shouldDownload(file) {
+					fmt.Printf("Downloading correct version of %s...\n", file)
+					err = downloadFile(hashURL+file, file)
+					if err != nil {
+						fmt.Printf("Failed to download %s: %v\n", file, err)
+					}
 				}
 			}
 		}
