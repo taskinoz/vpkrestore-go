@@ -22,7 +22,7 @@ jobs:
       - name: Build for Linux
         run: |
           mkdir -p build
-          GOOS=linux GOARCH=amd64 go build -o build/vpkrestore-linux-amd64 cmd/vpkrestore/vpkrestore.go
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o build/vpkrestore-linux-amd64 cmd/vpkrestore/vpkrestore.go
 
       - name: Build for Windows
         run: |
